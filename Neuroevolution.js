@@ -1,10 +1,161 @@
+class Neuron {
+	constructor () {
+		this.value = 0;
+		this.weights = [];
+	}
+
+	populate (inputs, values) {
+		this.weights = [];
+		for (let i = 0; i < inputs; i++) {
+			this.weights.push(values);
+		}
+	}
+}
+
+class Layer {
+	contructor (index) {
+			this.id = index || 0;
+			this.neurons = [];
+	}
+
+	populate (neurons, inputs, values) {
+		this.neurons = [];
+		for (let i = 0; i < neurons; i++) {
+			let neuron = new Neuron();
+			neuron.populate(inputs, values);
+			this.neurons.push(neuron);
+		}
+	}
+}
+
+class Network {
+	constructor () { this.layers = []; }
+
+	generateLayers (input, hiddens, output, values) {
+		let index = 0;
+		let previousNeurons = 0;
+		let layer;
+		// input
+		layer = new Layer(index);
+		layer.populate(input, previousNeurons, values); // Number of Inputs will be set to
+																									// 0 since it is an input layer.
+		previousNeurons = input;  // number of input is size of previous layer.
+		this.layers.push(layer);
+		index++;
+		// hidden
+		for (let h in hiddens) {
+			// Repeat same process as first layer for each hidden layer.
+			layer = new Layer(index);
+			layer.populate(hiddens[h], previousNeurons, values);
+			previousNeurons = hiddens[h];
+			this.layers.push(layer);
+			index++;
+		}
+		// output
+		layer = new Layer(index);
+		layer.populate(output, previousNeurons, values);  // Number of input is equal to
+																										// the size of the last hidden
+								// layer.
+		this.layers.push(layer);
+	}
+
+	save () {
+		const data = {
+			neurons: [], // number of neurons in each layer
+			weights: []
+		};
+		for(let layer in this.layers){
+			data.neurons.push(this.layers[layer].neurons.length);
+			for(let neuron in this.layers[layer].neurons){
+				for(let weight in this.layers[layer].neurons[neuron].weights){
+					data.weights.push(this.layers[layer].neurons[neuron].weights[weight]);
+				}
+			}
+		}
+		return data;
+	}
+
+	read (save, values) {
+		let previousNeurons = 0;
+		let index = 0;
+		let indexWeights = 0;
+		this.layers = [];
+		for (let neurons in save.neurons) {
+			// Create and populate layers.
+			let newLayer = new Layer(index);
+			newLayer.populate(save.neurons[neurons], previousNeurons, values);
+			for (let layer in newLayer.neurons) {
+				for (let weight in newLayer.neurons[layer].weights) {
+	  				// Apply neurons weights to each Neuron.
+					newLayer.neurons[layer].weights[weight] = save.weights[indexWeights];
+					indexWeights++; // Increment index of flat array.
+				}
+			}
+			previousNeurons = save.neurons[neurons];
+			index++;
+			this.layers.push(newLayer);
+		}
+	}
+
+	compute (inputs, activation) {
+		// set the input layer
+		const inputLayer = this.layers[0];
+		for (let input in inputs) {
+			if (inputLayer && inputLayer.neurons[input]) {
+				inputLayer.neurons[input].value = inputs[input];
+			}
+		}
+
+		// compute the intermediate layers
+		let prevLayer = inputLayer;
+		for(let layer = 1; layer < this.layers.length; layer++){
+			for(let neuron in this.layers[layer].neurons){
+				// For each Neuron in each layer.
+				let sum = 0;
+				for (let prevLayerNeuron in prevLayer.neurons){
+	  				// Every Neuron in the previous layer is an input to each Neuron in
+	  				// the next layer.
+					sum = sum + prevLayer.neurons[prevLayerNeuron].value
+	       						* this.layers[layer].neurons[neuron].weights[prevLayerNeuron];
+				}
+
+				// Compute the activation of the Neuron.
+				// this.layers[i].neurons[j].value = activation(sum); // self.options.activation(sum)
+
+				// HACK TEMP
+				this.layers[layer].neurons[neuron].value = ( (a) => {
+					const ap = -a / 1;
+					return (1 / (1 + Math.exp(ap)));
+				})(sum);
+
+			}
+			prevLayer = this.layers[layer];
+		}
+
+		// compute the output layer
+		let output = [];
+		const outputLayer = this.layers[this.layers.length - 1];
+		for (let neuron in outputLayer.neurons) {
+			output.push(outputLayer.neurons[neuron].value);
+		}
+		return output;
+	}
+}
+
+class Genome { // a score and a neural network
+	constructor (score = 0, network) {
+		this.score = score;
+		this.network = network;
+	}
+}
+
 /**
- * Provides a set of classes and methods for handling Neuroevolution and
+ * Provides a set of classes and methods for handling NeuroEvolution and
  * genetic algorithms.
  *
- * @param {options} An object of options for Neuroevolution.
+ * @param {options} An object of options for NeuroEvolution.
  */
-var Neuroevolution = function(options){
+var NeuroEvolution = function(options){
 	var self = this;  // reference to the top scope of this module
 
  	// Declaration of module parameters (options) and default values
@@ -65,205 +216,6 @@ var Neuroevolution = function(options){
 	// Overriding default options with the pass in options
 	self.set(options);
 
-
-/*NEURON**********************************************************************/
-	/**
-	 * Artificial Neuron class
-	 *
-	 * @constructor
-	 */
-	var Neuron = function(){
-		this.value = 0;
-		this.weights = [];
-	}
-
-	/**
-	 * Initialize number of neuron weights to random clamped values.
-	 *
-	 * @param {nb} Number of neuron weights (number of inputs).
-	 * @return void
-	 */
-	Neuron.prototype.populate = function(nb){
-		this.weights = [];
-		for(var i = 0; i < nb; i++){
-			this.weights.push(self.options.randomClamped());
-		}
-	}
-
-
-/*LAYER***********************************************************************/
-	/**
-	 * Neural Network Layer class.
-	 *
-	 * @constructor
-	 * @param {index} Index of this Layer in the Network.
-	 */
-	var Layer = function(index){
-		this.id = index || 0;
-		this.neurons = [];
-	}
-
-	/**
-	 * Populate the Layer with a set of randomly weighted Neurons.
-	 *
-	 * Each Neuron be initialied with nbInputs inputs with a random clamped
-	 * value.
-	 *
-	 * @param {nbNeurons} Number of neurons.
-	 * @param {nbInputs} Number of inputs.
-	 * @return void
-	 */
-	Layer.prototype.populate = function(nbNeurons, nbInputs){
-		this.neurons = [];
-		for(var i = 0; i < nbNeurons; i++){
-			var n = new Neuron();
-			n.populate(nbInputs);
-			this.neurons.push(n);
-		}
-	}
-
-
-/*NEURAL NETWORK**************************************************************/
-	/**
-	 * Neural Network class
-	 *
-	 * Composed of Neuron Layers.
-	 *
-	 * @constructor
-	 */
-	var Network = function(){
-		this.layers = [];
-	}
-
-	/**
-	 * Generate the Network layers.
-	 *
-	 * @param {input} Number of Neurons in Input layer.
-	 * @param {hidden} Number of Neurons per Hidden layer.
-	 * @param {output} Number of Neurons in Output layer.
-	 * @return void
-	 */
-	Network.prototype.perceptronGeneration = function(input, hiddens, output){
-		var index = 0;
-		var previousNeurons = 0;
-		var layer = new Layer(index);
-    		layer.populate(input, previousNeurons); // Number of Inputs will be set to
-                	                                // 0 since it is an input layer.
-		previousNeurons = input;  // number of input is size of previous layer.
-		this.layers.push(layer);
-		index++;
-		for(var i in hiddens){
-			// Repeat same process as first layer for each hidden layer.
-			var layer = new Layer(index);
-			layer.populate(hiddens[i], previousNeurons);
-			previousNeurons = hiddens[i];
-			this.layers.push(layer);
-			index++;
-		}
-		var layer = new Layer(index);
-		layer.populate(output, previousNeurons);  // Number of input is equal to
-                        	                          // the size of the last hidden
-							  // layer.
-		this.layers.push(layer);
-	}
-
-	/**
-	 * Create a copy of the Network (neurons and weights).
-	 *
-	 * Returns number of neurons per layer and a flat array of all weights.
-	 *
-	 * @return Network data.
-	 */
-	Network.prototype.getSave = function(){
-		var datas = {
-			neurons:[], // Number of Neurons per layer.
-			weights:[]  // Weights of each Neuron's inputs.
-		};
-
-		for(var i in this.layers){
-			datas.neurons.push(this.layers[i].neurons.length);
-			for(var j in this.layers[i].neurons){
-				for(var k in this.layers[i].neurons[j].weights){
-	  				// push all input weights of each Neuron of each Layer into a flat
-	  				// array.
-					datas.weights.push(this.layers[i].neurons[j].weights[k]);
-				}
-			}
-		}
-		return datas;
-	}
-
-	/**
-	 * Apply network data (neurons and weights).
-	 *
-	 * @param {save} Copy of network data (neurons and weights).
-	 * @return void
-	 */
-	Network.prototype.setSave = function(save){
-		var previousNeurons = 0;
-		var index = 0;
-		var indexWeights = 0;
-		this.layers = [];
-		for(var i in save.neurons){
-			// Create and populate layers.
-			var layer = new Layer(index);
-			layer.populate(save.neurons[i], previousNeurons);
-			for(var j in layer.neurons){
-				for(var k in layer.neurons[j].weights){
-	  				// Apply neurons weights to each Neuron.
-					layer.neurons[j].weights[k] = save.weights[indexWeights];
-
-					indexWeights++; // Increment index of flat array.
-				}
-			}
-			previousNeurons = save.neurons[i];
-			index++;
-			this.layers.push(layer);
-		}
-	}
-
-	/**
-	 * Compute the output of an input.
-	 *
-	 * @param {inputs} Set of inputs.
-	 * @return Network output.
-	 */
-	Network.prototype.compute = function(inputs){
-		// Set the value of each Neuron in the input layer.
-		for(var i in inputs){
-			if(this.layers[0] && this.layers[0].neurons[i]){
-				this.layers[0].neurons[i].value = inputs[i];
-			}
-		}
-
-		var prevLayer = this.layers[0]; // Previous layer is input layer.
-		for(var i = 1; i < this.layers.length; i++){
-			for(var j in this.layers[i].neurons){
-				// For each Neuron in each layer.
-				var sum = 0;
-				for(var k in prevLayer.neurons){
-	  				// Every Neuron in the previous layer is an input to each Neuron in
-	  				// the next layer.
-					sum += prevLayer.neurons[k].value
-	       						* this.layers[i].neurons[j].weights[k];
-				}
-
-				// Compute the activation of the Neuron.
-				this.layers[i].neurons[j].value = self.options.activation(sum);
-			}
-			prevLayer = this.layers[i];
-		}
-
-		// All outputs of the Network.
-		var out = [];
-		var lastLayer = this.layers[this.layers.length - 1];
-		for(var i in lastLayer.neurons){
-			out.push(lastLayer.neurons[i].value);
-		}
-		return out;
-	}
-
-
 /*GENOME**********************************************************************/
 	/**
 	 * Genome class.
@@ -275,10 +227,7 @@ var Neuroevolution = function(options){
 	 * @param {score}
 	 * @param {network}
 	 */
-	var Genome = function(score, network){
-		this.score = score || 0;
-		this.network = network || null;
-	}
+
 
 
 /*GENERATION******************************************************************/
@@ -435,10 +384,12 @@ var Neuroevolution = function(options){
 		for(var i = 0; i < self.options.population; i++){
       			// Generate the Network and save it.
 			var nn = new Network();
-			nn.perceptronGeneration(self.options.network[0],
-						self.options.network[1],
-                              			self.options.network[2]);
-			out.push(nn.getSave());
+			nn.generateLayers(
+				self.options.network[0],
+				self.options.network[1],
+        self.options.network[2],
+				self.options.randomClamped());
+			out.push(nn.save());
 		}
 
 		this.generations.push(new Generation());
@@ -509,7 +460,7 @@ var Neuroevolution = function(options){
 		var nns = [];
 		for(var i in networks){
 			var nn = new Network();
-			nn.setSave(networks[i]);
+			nn.read(networks[i], self.options.randomClamped());
 			nns.push(nn);
 		}
 
@@ -545,6 +496,6 @@ var Neuroevolution = function(options){
 	 * @return void.
 	 */
 	self.networkScore = function(network, score){
-		self.generations.addGenome(new Genome(score, network.getSave()));
+		self.generations.addGenome(new Genome(score, network.save()));
 	}
 }
