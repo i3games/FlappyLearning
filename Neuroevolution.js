@@ -109,25 +109,24 @@ class Network {
     // compute the intermediate layers
     let prevLayer = inputLayer;
     for (let l = 1; l < this.layers.length; l++) {
-      for (let n = 0; n < this.layers[l].neurons.length; n++){
+      for (let n = 0; n < this.layers[l].neurons.length; n++) {
         // For each Neuron in each layer.
         let sum = 0;
-        for (let prevLayerN = 0; prevLayerN < prevLayer.neurons.length; prevLayerN++){
+        for (let prevLayerN = 0; prevLayerN < prevLayer.neurons.length; prevLayerN++) {
             // Every Neuron in the previous layer is an input to each Neuron in
             // the next layer.
-          sum = sum + prevLayer.neurons[prevLayerN].value
-                     * this.layers[l].neurons[n].weights[prevLayerN];
+          sum = sum + prevLayer.neurons[prevLayerN].value *
+                     this.layers[l].neurons[n].weights[prevLayerN];
         }
 
         // Compute the activation of the Neuron.
         // this.layers[i].neurons[j].value = activation(sum); // this.options.activation(sum)
 
         // HACK TEMP
-        this.layers[l].neurons[n].value = ( (a) => {
+        this.layers[l].neurons[n].value = ((a) => {
           const ap = -a / 1;
           return (1 / (1 + Math.exp(ap)));
         })(sum);
-
       }
       prevLayer = this.layers[l];
     }
@@ -142,7 +141,7 @@ class Network {
   }
 }
 
-class Genome { // a score and a neural network
+class Genome {
   constructor (score = 0, network) {
     this.score = score;
     this.network = network;
@@ -158,7 +157,7 @@ class Generation {
     let i;
     for (i = 0; i < this.genomes.length; i++) {
       // Sort in descending order.
-      if (sortOrder < 0){
+      if (sortOrder < 0) {
         if (genome.score > this.genomes[i].score) { break; } // TODO Wrong order ???
       // Sort in ascending order.
       } else {
@@ -175,7 +174,7 @@ class Generation {
     for (let c = 0; c < numChildren; c++) {
       // Deep clone of genome 1.
       const child = JSON.parse(JSON.stringify(g1)); // TODO !!!!
-      for (let w = 0; w < g2.network.weights.length; w++){
+      for (let w = 0; w < g2.network.weights.length; w++) {
         // Genetic crossover
         // 0.5 is the crossover factor.
         // FIXME Really should be a predefined constant.
@@ -246,7 +245,7 @@ class Generation {
 class Generations {
   constructor () {
     this.generations = [];
-    let currentGeneration = new Generation(); // ???
+    let currentGeneration = new Generation(); // TODO never used
   }
 
   firstGeneration (population, network, randomClamped, numInputs, hiddens, numOutputs) { // FIXME numInputs, hiddens, numOutputs unused.
@@ -263,7 +262,7 @@ class Generations {
 
   nextGeneration (elitism, population, randomBehaviour, randomClamped,
     numChildren, mutationRate, mutationRange) {
-    if( this.generations.length === 0) { // Need to create first generation.
+    if (this.generations.length === 0) { // Need to create first generation.
       return false;
     }
 
@@ -299,8 +298,8 @@ class NeuroEvolution {
   constructor (options) {
     this.options = {
       activation: function (a) {
-        ap = (-a) / 1;
-        return (1 / (1 + Math.exp(ap)))
+        const ap = (-a) / 1;
+        return (1 / (1 + Math.exp(ap)));
       },
       randomClamped: function () {
         return Math.random() * 2 - 1;
@@ -315,7 +314,7 @@ class NeuroEvolution {
       lowHistoric: false,      // Only save score (not the network).
       scoreSort: -1,           // Sort order (-1 = desc, 1 = asc).
       numChildren: 1           // Number of children by breeding.
-    }
+    };
 
     this.set(options); // Overriding default options with the pass in options
     this.generations = new Generations();
@@ -337,7 +336,7 @@ class NeuroEvolution {
     let networks = [];
 
     if (this.generations.generations.length === 0) { // If no Generations, create first.
-      networks = this.generations.firstGeneration (
+      networks = this.generations.firstGeneration(
         this.options.population,
         this.options.network,
         this.options.randomClamped
@@ -364,7 +363,7 @@ class NeuroEvolution {
 
     // If option set, remove old networks.
     if (this.options.lowHistoric) {
-      if(this.generations.generations.length >= 2) {
+      if (this.generations.generations.length >= 2) {
         const genomes = this.generations.generations[this.generations.generations.length - 2].genomes;
         for (let i = 0; i < genomes.length; i++) {
           delete genomes[i].network;
@@ -374,7 +373,7 @@ class NeuroEvolution {
 
     // If option set, remove older generations.
     if (this.options.historic !== -1) {
-      if(this.generations.generations.length > this.options.historic + 1) {
+      if (this.generations.generations.length > this.options.historic + 1) {
         this.generations.generations.splice(0, this.generations.generations.length - (this.options.historic + 1));
       }
     }

@@ -152,8 +152,8 @@ class Game {
     this.pipes = [];
     this.birds = [];
 
-    this.gen = this.neuvol.nextGeneration(); // neuvol
-    for (let i in this.gen) { // TODO
+    this.gen = this.neuvol.nextGeneration(); // NeuroEvolution: next generation
+    for (let i = 0; i < this.gen.length; i++) {
       let b = new Bird();
       this.birds.push(b);
     }
@@ -178,7 +178,7 @@ class Game {
     for (let bird of this.birds) {
       if (bird.alive) {
         const inputs = [bird.y / this.height, nextHole];
-        const res = this.gen[i].compute(inputs, null); // Network
+        const res = this.gen[i].compute(inputs, null); // NeuroEvolution: compute the network
         if (res > 0.5) {
           bird.flap();
         }
@@ -186,7 +186,7 @@ class Game {
         if (bird.isDead(this.height, this.pipes)) {
           bird.alive = false;
           this.alives--;
-          this.neuvol.networkScore(this.gen[i], this.score);
+          this.neuvol.networkScore(this.gen[i], this.score); // NeuroEvolution: network score
           if (this.isItEnd()) { this.init(); } // update and render continue running
         }
       }
@@ -298,6 +298,6 @@ window.onload = () => {
   start();
 };
 
-function speed (fps) { // TODO work on the UI side
+function speed (fps) { // TODO work on the DOM / UI
   game.fps = parseInt(fps);
 }

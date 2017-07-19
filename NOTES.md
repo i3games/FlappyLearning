@@ -22,14 +22,14 @@ Network = {
   layers: [Layer]
 }
 
-(StoredNetwork) = { // used to store Network in Genomes, see Network.save() and Network.read()
-  neurons: [0], // number of neurons in each layer
-  weights: [0]   // flat list of weights
+(NetworkData) = {   // used to store network data in Genomes, see Network.save() and Network.read()
+  neurons: [0],     // number of neurons in each layer
+  weights: [0]      // flat list of weights
 }
 
 Genome = {
   score: 0,
-  network: (StoredNetwork)
+  network: (NetworkData)
 }
 
 Generation = {
