@@ -31,29 +31,29 @@ class Layer {
 class Network {
   constructor () { this.layers = []; }
 
-  generateLayers (input, hiddens, output, values) {
+  generateLayers (numInputs, hiddens, numOutputs, values) {
     let index = 0;
-    let previousNeurons = 0;
+    let numPreviousNeurons = 0;
     let layer;
-    // input
+    // imput layer
     layer = new Layer(index);
-    layer.populate(input, previousNeurons, values); // Number of Inputs will be set to
+    layer.populate(numInputs, numPreviousNeurons, values); // Number of Inputs will be set to
                                                   // 0 since it is an input layer.
-    previousNeurons = input;  // number of input is size of previous layer.
+    numPreviousNeurons = numInputs;  // number of input is size of previous layer. // TODO check
     this.layers.push(layer);
     index++;
-    // hidden
+    // hidden layers
     for (let hidden of hiddens) {
       // Repeat same process as first layer for each hidden layer.
       layer = new Layer(index);
-      layer.populate(hidden, previousNeurons, values);
-      previousNeurons = hidden;
+      layer.populate(hidden, numPreviousNeurons, values);
+      numPreviousNeurons = hidden;
       this.layers.push(layer);
       index++;
     }
-    // output
+    // output layer
     layer = new Layer(index);
-    layer.populate(output, previousNeurons, values);  // Number of input is equal to
+    layer.populate(numOutputs, numPreviousNeurons, values);  // Number of input is equal to
                                                     // the size of the last hidden
                 // layer.
     this.layers.push(layer);
@@ -76,14 +76,14 @@ class Network {
   }
 
   read (save, values) {
-    let previousNeurons = 0;
+    let numPreviousNeurons = 0;
     let index = 0;
     let indexWeights = 0;
     this.layers = [];
-    for (let neurons of save.neurons) {
+    for (let numNeurons of save.neurons) {
       // Create and populate layers.
       let newLayer = new Layer(index);
-      newLayer.populate(neurons, previousNeurons, values);
+      newLayer.populate(numNeurons, numPreviousNeurons, values);
       for (let neuron of newLayer.neurons) {
         for (let weight = 0; weight < neuron.weights.length; weight++) {
             // Apply neurons weights to each Neuron.
@@ -91,7 +91,7 @@ class Network {
           indexWeights++; // Increment index of flat array.
         }
       }
-      previousNeurons = neurons;
+      numPreviousNeurons = numNeurons;
       index++;
       this.layers.push(newLayer);
     }
@@ -170,9 +170,9 @@ class Generation {
     this.genomes.splice(i, 0, genome);
   }
 
-  breed (g1, g2, children, mutationRate, mutationRange) {
+  breed (g1, g2, numChildren, mutationRate, mutationRange) {
     var result = [];
-    for (let c = 0; c < children; c++) {
+    for (let c = 0; c < numChildren; c++) {
       // Deep clone of genome 1.
       const child = JSON.parse(JSON.stringify(g1)); // TODO !!!!
       for (let w = 0; w < g2.network.weights.length; w++){
@@ -249,7 +249,7 @@ class Generations {
     let currentGeneration = new Generation(); // ???
   }
 
-  firstGeneration (population, network, randomClamped, input, hiddens, output) { // FIXME input, hiddens, output unused.
+  firstGeneration (population, network, randomClamped, numInputs, hiddens, numOutputs) { // FIXME numInputs, hiddens, numOutputs unused.
     const out = [];
     for (let i = 0; i < population; i++) {
       // Generate the Network and save it.
@@ -262,7 +262,7 @@ class Generations {
   }
 
   nextGeneration (elitism, population, randomBehaviour, randomClamped,
-    nbChild, mutationRate, mutationRange) {
+    numChildren, mutationRate, mutationRange) {
     if( this.generations.length === 0) { // Need to create first generation.
       return false;
     }
@@ -272,7 +272,7 @@ class Generations {
       population,
       randomBehaviour,
       randomClamped, // TODO check
-      nbChild,
+      numChildren,
       mutationRate,
       mutationRange
     );
@@ -340,7 +340,7 @@ var NeuroEvolution = function(options){
     historic:0,             // Latest generations saved.
     lowHistoric:false,      // Only save score (not the network).
     scoreSort:-1,           // Sort order (-1 = desc, 1 = asc).
-    nbChild:1               // Number of children by breeding.
+    numChildren:1               // Number of children by breeding.
 
   }
 
@@ -399,7 +399,7 @@ var NeuroEvolution = function(options){
         self.options.population,
         self.options.randomBehaviour,
         self.options.randomClamped, // TODO check
-        self.options.nbChild,
+        self.options.numChildren,
         self.options.mutationRate,
         self.options.mutationRange
       );
