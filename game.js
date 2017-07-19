@@ -4,7 +4,7 @@
 
   function setZeroTimeout (fn) {
     timeouts.push(fn);
-    window.postMessage(messageName, '*'); 
+    window.postMessage(messageName, '*');
   }
 
   function handleMessage (event) {
@@ -39,7 +39,7 @@ class Bird {
 
   init (params) {
     for (let i in params) {
-      this[i] = params[i]; // ???
+      this[i] = params[i]; // overwrite random parameters ???
     }
   }
 
@@ -57,11 +57,11 @@ class Bird {
       return true;
     }
 
-    for (let i in pipes) {
-      if (!(this.x > pipes[i].x + pipes[i].width ||
-        this.x + this.width < pipes[i].x ||
-        this.y > pipes[i].y + pipes[i].height ||
-        this.y + this.height < pipes[i].y)) {
+    for (let pipe of pipes) {
+      if (!(this.x > pipe.x + pipe.width ||
+        this.x + this.width < pipe.x ||
+        this.y > pipe.y + pipe.height ||
+        this.y + this.height < pipe.y)) {
         return true;
       }
     }
@@ -92,7 +92,7 @@ class Pipe {
   isOut () {
     return (this.x + this.width < 0);
   }
-  }
+}
 
 class Game {
   constructor (neuvol, assets) {
@@ -103,7 +103,7 @@ class Game {
     this.pipes = [];
     this.birds = [];
     this.score = 0;
-    this.canvas = document.querySelector('#flappy'); // :(
+    this.canvas = document.querySelector('#flappy'); // :( parametrize
     this.ctx = this.canvas.getContext('2d');
     this.width = this.canvas.width;
     this.height = this.canvas.height;
@@ -126,11 +126,11 @@ class Game {
       let nb = 0;
       let loaded = 0;
       let imgs = {};
-      for (var i in sources) {
+      for (let source in sources) {
         nb++;
-        imgs[i] = new Image();
-        imgs[i].src = sources[i];
-        imgs[i].onload = () => {
+        imgs[source] = new Image();
+        imgs[source].src = sources[source];
+        imgs[source].onload = () => {
           loaded++;
           if (loaded === nb) {
             callback(imgs);
@@ -152,7 +152,7 @@ class Game {
     this.pipes = [];
     this.birds = [];
 
-    this.gen = this.neuvol.nextGeneration(); //
+    this.gen = this.neuvol.nextGeneration(); // neuvol
     for (let i in this.gen) { // TODO
       let b = new Bird();
       this.birds.push(b);
@@ -163,6 +163,7 @@ class Game {
 
   update () {
     this.backgroundx = this.backgroundx + this.backgroundSpeed;
+
     let nextHole = 0;
     if (this.birds.length > 0) {
       for (let i = 0; i < this.pipes.length; i = i + 2) {
@@ -173,21 +174,23 @@ class Game {
       }
     }
 
-    for (let i in this.birds) {
-      if (this.birds[i].alive) {
-        const inputs = [this.birds[i].y / this.height, nextHole];
+    let i = 0;
+    for (let bird of this.birds) {
+      if (bird.alive) {
+        const inputs = [bird.y / this.height, nextHole];
         const res = this.gen[i].compute(inputs, null); // Network
         if (res > 0.5) {
-          this.birds[i].flap();
+          bird.flap();
         }
-        this.birds[i].update();
-        if (this.birds[i].isDead(this.height, this.pipes)) {
-          this.birds[i].alive = false;
+        bird.update();
+        if (bird.isDead(this.height, this.pipes)) {
+          bird.alive = false;
           this.alives--;
           this.neuvol.networkScore(this.gen[i], this.score);
           if (this.isItEnd()) { this.init(); } // update and render continue running
         }
       }
+      i = i + 1;
     }
 
     for (let p = 0; p < this.pipes.length; p++) {
@@ -222,10 +225,8 @@ class Game {
   }
 
   isItEnd () {
-    for (let i in this.birds) {
-      if (this.birds[i].alive) {
-        return false;
-      }
+    for (let bird of this.birds) {
+      if (bird.alive) { return false; }
     }
     return true;
   }
@@ -237,28 +238,27 @@ class Game {
             i * this.images.background.width - Math.floor(this.backgroundx % this.images.background.width), 0);
     }
 
-    for (let i in this.pipes) {
+    let i = 0;
+    for (let pipe of this.pipes) {
       if (i % 2 === 0) {
         this.ctx.drawImage(this.images.pipetop,
-                this.pipes[i].x,
-                this.pipes[i].y + this.pipes[i].height - this.images.pipetop.height,
-                this.pipes[i].width, this.images.pipetop.height);
+                pipe.x, pipe.y + pipe.height - this.images.pipetop.height,
+                pipe.width, this.images.pipetop.height);
       } else {
         this.ctx.drawImage(this.images.pipebottom,
-                  this.pipes[i].x, this.pipes[i].y, this.pipes[i].width, this.images.pipetop.height);
+                  pipe.x, pipe.y, pipe.width, this.images.pipetop.height);
       }
+      i = i + 1;
     }
 
     this.ctx.fillStyle = '#FFC600';
     this.ctx.strokeStyle = '#CE9E00';
-    for (let i in this.birds) {
-      if (this.birds[i].alive) {
+    for (let bird of this.birds) {
+      if (bird.alive) {
         this.ctx.save();
-        this.ctx.translate(this.birds[i].x + this.birds[i].width / 2,
-                    this.birds[i].y + this.birds[i].height / 2);
-        this.ctx.rotate(Math.PI / 2 * this.birds[i].gravity / 20);
-        this.ctx.drawImage(this.images.bird,
-                      -this.birds[i].width / 2, -this.birds[i].height / 2, this.birds[i].width, this.birds[i].height);
+        this.ctx.translate(bird.x + bird.width / 2, bird.y + bird.height / 2);
+        this.ctx.rotate(Math.PI / 2 * bird.gravity / 20);
+        this.ctx.drawImage(this.images.bird, -bird.width / 2, -bird.height / 2, bird.width, bird.height);
         this.ctx.restore();
       }
     }
@@ -274,7 +274,7 @@ class Game {
       this.display();
     });
   }
-              }
+}
 
 let game;
 

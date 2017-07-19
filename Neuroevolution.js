@@ -4,25 +4,25 @@ class Neuron {
     this.weights = [];
   }
 
-  populate (inputs, values) {
+  populate (numInputs, values) {
     this.weights = [];
-    for (let i = 0; i < inputs; i++) {
+    for (let i = 0; i < numInputs; i++) {
       this.weights.push(values);
     }
   }
 }
 
 class Layer {
-  contructor (index) {
-      this.id = index || 0;
-      this.neurons = [];
+  constructor (index = 0) {
+    this.id = index;
+    this.neurons = [];
   }
 
-  populate (neurons, inputs, values) {
+  populate (numNeurons, numInputs, values) {
     this.neurons = [];
-    for (let i = 0; i < neurons; i++) {
+    for (let i = 0; i < numNeurons; i++) {
       let neuron = new Neuron();
-      neuron.populate(inputs, values);
+      neuron.populate(numInputs, values);
       this.neurons.push(neuron);
     }
   }
@@ -43,11 +43,11 @@ class Network {
     this.layers.push(layer);
     index++;
     // hidden
-    for (let h in hiddens) {
+    for (let hidden of hiddens) {
       // Repeat same process as first layer for each hidden layer.
       layer = new Layer(index);
-      layer.populate(hiddens[h], previousNeurons, values);
-      previousNeurons = hiddens[h];
+      layer.populate(hidden, previousNeurons, values);
+      previousNeurons = hidden;
       this.layers.push(layer);
       index++;
     }
@@ -64,11 +64,11 @@ class Network {
       neurons: [], // number of neurons in each layer
       weights: []
     };
-    for(let layer in this.layers){
-      data.neurons.push(this.layers[layer].neurons.length);
-      for(let neuron in this.layers[layer].neurons){
-        for(let weight in this.layers[layer].neurons[neuron].weights){
-          data.weights.push(this.layers[layer].neurons[neuron].weights[weight]);
+    for (let layer of this.layers) {
+      data.neurons.push(layer.neurons.length);
+      for (let neuron of layer.neurons) {
+        for (let weight of neuron.weights) {
+          data.weights.push(weight);
         }
       }
     }
@@ -80,63 +80,63 @@ class Network {
     let index = 0;
     let indexWeights = 0;
     this.layers = [];
-    for (let neurons in save.neurons) {
+    for (let neurons of save.neurons) {
       // Create and populate layers.
       let newLayer = new Layer(index);
-      newLayer.populate(save.neurons[neurons], previousNeurons, values);
-      for (let layer in newLayer.neurons) {
-        for (let weight in newLayer.neurons[layer].weights) {
+      newLayer.populate(neurons, previousNeurons, values);
+      for (let neuron of newLayer.neurons) {
+        for (let weight = 0; weight < neuron.weights.length; weight++) {
             // Apply neurons weights to each Neuron.
-          newLayer.neurons[layer].weights[weight] = save.weights[indexWeights];
+          neuron.weights[weight] = save.weights[indexWeights];
           indexWeights++; // Increment index of flat array.
         }
       }
-      previousNeurons = save.neurons[neurons];
+      previousNeurons = neurons;
       index++;
       this.layers.push(newLayer);
     }
   }
 
-  compute (inputs, activation) {
+  compute (inputs, activation) { // called from the game: [bird.y / this.height, nextHole], null
     // set the input layer
     const inputLayer = this.layers[0];
-    for (let input in inputs) {
-      if (inputLayer && inputLayer.neurons[input]) {
-        inputLayer.neurons[input].value = inputs[input];
+    for (let i = 0; i < inputs.length; i++) {
+      if (inputLayer && inputLayer.neurons[i]) {
+        inputLayer.neurons[i].value = inputs[i];
       }
     }
 
     // compute the intermediate layers
     let prevLayer = inputLayer;
-    for(let layer = 1; layer < this.layers.length; layer++){
-      for(let neuron in this.layers[layer].neurons){
+    for (let l = 1; l < this.layers.length; l++) {
+      for (let n = 0; n < this.layers[l].neurons.length; n++){
         // For each Neuron in each layer.
         let sum = 0;
-        for (let prevLayerNeuron in prevLayer.neurons){
+        for (let prevLayerN = 0; prevLayerN < prevLayer.neurons.length; prevLayerN++){
             // Every Neuron in the previous layer is an input to each Neuron in
             // the next layer.
-          sum = sum + prevLayer.neurons[prevLayerNeuron].value
-                     * this.layers[layer].neurons[neuron].weights[prevLayerNeuron];
+          sum = sum + prevLayer.neurons[prevLayerN].value
+                     * this.layers[l].neurons[n].weights[prevLayerN];
         }
 
         // Compute the activation of the Neuron.
         // this.layers[i].neurons[j].value = activation(sum); // self.options.activation(sum)
 
         // HACK TEMP
-        this.layers[layer].neurons[neuron].value = ( (a) => {
+        this.layers[l].neurons[n].value = ( (a) => {
           const ap = -a / 1;
           return (1 / (1 + Math.exp(ap)));
         })(sum);
 
       }
-      prevLayer = this.layers[layer];
+      prevLayer = this.layers[l];
     }
 
     // compute the output layer
     let output = [];
     const outputLayer = this.layers[this.layers.length - 1];
-    for (let neuron in outputLayer.neurons) {
-      output.push(outputLayer.neurons[neuron].value);
+    for (let neuron of outputLayer.neurons) {
+      output.push(neuron.value);
     }
     return output;
   }
@@ -175,18 +175,18 @@ class Generation {
     for (let c = 0; c < children; c++) {
       // Deep clone of genome 1.
       const child = JSON.parse(JSON.stringify(g1)); // TODO !!!!
-      for (let weight in g2.network.weights){
+      for (let w = 0; w < g2.network.weights.length; w++){
         // Genetic crossover
         // 0.5 is the crossover factor.
         // FIXME Really should be a predefined constant.
         if (Math.random() <= 0.5) {
-          child.network.weights[weight] = g2.network.weights[weight];
+          child.network.weights[w] = g2.network.weights[w];
         }
       }
       // Perform mutation on some weights.
-      for (let weight in child.network.weights) {
+      for (let w = 0; w < child.network.weights.length; w++) {
         if (Math.random() <= mutationRate) {
-          child.network.weights[weight] +=
+          child.network.weights[w] +=   // FIXME
             Math.random() * mutationRange * 2 - mutationRange;
         }
       }
@@ -207,18 +207,18 @@ class Generation {
     }
 
     for (let i = 0; i < Math.round(randomBehaviour * population); i++) {
-      const n = JSON.parse(JSON.stringify(this.genomes[0].network));
-      for (let k in n.weights) {
-        n.weights[k] = randomClamped();
+      const net = JSON.parse(JSON.stringify(this.genomes[0].network));
+      for (let k = 0; k < net.weights.length; k++) {
+        net.weights[k] = randomClamped();
       }
-      if(nexts.length < population){
-        nexts.push(n);
+      if (nexts.length < population) {
+        nexts.push(net);
       }
     }
 
     let max = 0;
     while (true) { // infinite loop
-      for(let i = 0; i < max; i++) {
+      for (let i = 0; i < max; i++) {
         // Create the children and push them to the nexts array.
         let children = this.breed(
           this.genomes[i],
@@ -226,8 +226,8 @@ class Generation {
           (numChildren > 0 ? numChildren : 1),
           mutationRate,
           mutationRange);
-        for (let c in children) {
-          nexts.push(children[c].network);
+        for (let child of children) {
+          nexts.push(child.network);
           if (nexts.length >= population) {
             // Return once number of children is equal to the
             // population by generation value.
@@ -407,9 +407,9 @@ var NeuroEvolution = function(options){
 
         // Create Networks from the current Generation.
     var nns = [];
-    for(var i in networks){
+    for(var net of networks){
       var nn = new Network();
-      nn.read(networks[i], self.options.randomClamped());
+      nn.read(net, self.options.randomClamped());
       nns.push(nn);
     }
 
@@ -420,7 +420,7 @@ var NeuroEvolution = function(options){
           self.generations
             .generations[self.generations.generations.length - 2]
                         .genomes;
-        for(var i in genomes){
+        for(let i = 0; i < genomes.length; i++){
           delete genomes[i].network;
         }
       }
