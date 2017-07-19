@@ -154,19 +154,8 @@ class Generation {
   }
 
   addGenome (genome, sortOrder) {
-    let i;
-    for (i = 0; i < this.genomes.length; i++) {
-      // Sort in descending order.
-      if (sortOrder < 0) {
-        if (genome.score > this.genomes[i].score) { break; } // TODO Wrong order ???
-      // Sort in ascending order.
-      } else {
-        if (genome.score < this.genomes[i].score) { break; }
-      }
-    }
-
-    // Insert genome into correct position.
-    this.genomes.splice(i, 0, genome);
+    this.genomes.push(genome);
+    this.genomes.sort((a, b) => (a.score - b.score) * Math.sign(sortOrder));
   }
 
   breed (g1, g2, numChildren, mutationRate, mutationRange) {
