@@ -120,7 +120,7 @@ class Network {
         }
 
         // Compute the activation of the Neuron.
-        // this.layers[i].neurons[j].value = activation(sum); // self.options.activation(sum)
+        // this.layers[i].neurons[j].value = activation(sum); // this.options.activation(sum)
 
         // HACK TEMP
         this.layers[l].neurons[n].value = ( (a) => {
@@ -295,159 +295,94 @@ class Generations {
   }
 }
 
-/**
- * Provides a set of classes and methods for handling NeuroEvolution and
- * genetic algorithms.
- *
- * @param {options} An object of options for NeuroEvolution.
- */
-var NeuroEvolution = function(options){
-  var self = this;  // reference to the top scope of this module
+class NeuroEvolution {
+  constructor (options) {
+    this.options = {
+      activation: function (a) {
+        ap = (-a) / 1;
+        return (1 / (1 + Math.exp(ap)))
+      },
+      randomClamped: function () {
+        return Math.random() * 2 - 1;
+      },
+      network: [1, [1], 1],    // Perceptron network structure (1 hidden layer).
+      population: 50,          // Population by generation.
+      elitism: 0.2,            // Best networks kepts unchanged for the next generation (rate).
+      randomBehaviour: 0.2,    // New random networks for the next generation (rate).
+      mutationRate: 0.1,       // Mutation rate on the weights of synapses.
+      mutationRange: 0.5,      // Interval of the mutation changes on the synapse weight.
+      historic: 0,             // Latest generations saved.
+      lowHistoric: false,      // Only save score (not the network).
+      scoreSort: -1,           // Sort order (-1 = desc, 1 = asc).
+      numChildren: 1           // Number of children by breeding.
+    }
 
-   // Declaration of module parameters (options) and default values
-  self.options = {
-      /**
-        * Logistic activation function.
-        *
-   * @param {a} Input value.
-   * @return Logistic function output.
-   */
-    activation: function(a){
-      ap = (-a)/1;
-      return (1/(1 + Math.exp(ap)))
-    },
-
-    /**
-     * Returns a random value between -1 and 1.
-     *
-     * @return Random value.
-     */
-    randomClamped: function(){
-      return Math.random() * 2 - 1;
-    },
-
-    // various factors and parameters (along with default values).
-    network:[1, [1], 1],    // Perceptron network structure (1 hidden
-          // layer).
-    population:50,          // Population by generation.
-    elitism:0.2,            // Best networks kepts unchanged for the next
-                // generation (rate).
-    randomBehaviour:0.2,    // New random networks for the next generation
-                // (rate).
-    mutationRate:0.1,       // Mutation rate on the weights of synapses.
-    mutationRange:0.5,      // Interval of the mutation changes on the
-                // synapse weight.
-    historic:0,             // Latest generations saved.
-    lowHistoric:false,      // Only save score (not the network).
-    scoreSort:-1,           // Sort order (-1 = desc, 1 = asc).
-    numChildren:1               // Number of children by breeding.
-
+    this.set(options); // Overriding default options with the pass in options
+    this.generations = new Generations();
   }
 
-  /**
-   * Override default options.
-   *
-   * @param {options} An object of Neuroevolution options.
-   * @return void
-   */
-  self.set = function(options){
-    for(var i in options){
-            if(this.options[i] != undefined){ // Only override if the passed in value
-                                                // is actually defined.
-        self.options[i] = options[i];
+  set (options) {
+    for (let option in options) {
+      if (this.options[option] != null) {   // Only override if the passed in value                                            // is actually defined.
+        this.options[option] = options[option];
       }
     }
   }
 
-  // Overriding default options with the pass in options
-  self.set(options);
-
-
-
-
-/*SELF************************************************************************/
-  self.generations = new Generations();
-
-  /**
-   * Reset and create a new Generations object.
-   *
-   * @return void.
-   */
-  self.restart = function(){
-    self.generations = new Generations();
+  restart () {
+    this.generations = new Generations();
   }
 
-  /**
-   * Create the next generation.
-   *
-   * @return Neural Network array for next Generation.
-   */
-  self.nextGeneration = function(){
-    var networks = [];
+  nextGeneration () {
+    let networks = [];
 
-    if(self.generations.generations.length == 0){
-            // If no Generations, create first.
-      networks = self.generations.firstGeneration(
-        self.options.population,
-        self.options.network,
-        self.options.randomClamped
+    if (this.generations.generations.length === 0) { // If no Generations, create first.
+      networks = this.generations.firstGeneration (
+        this.options.population,
+        this.options.network,
+        this.options.randomClamped
       );
-    }else{
-            // Otherwise, create next one.
-      networks = self.generations.nextGeneration(
-        self.options.elitism,
-        self.options.population,
-        self.options.randomBehaviour,
-        self.options.randomClamped, // TODO check
-        self.options.numChildren,
-        self.options.mutationRate,
-        self.options.mutationRange
+    } else { // Otherwise, create next one.
+      networks = this.generations.nextGeneration(
+        this.options.elitism,
+        this.options.population,
+        this.options.randomBehaviour,
+        this.options.randomClamped, // TODO check
+        this.options.numChildren,
+        this.options.mutationRate,
+        this.options.mutationRange
       );
     }
 
-        // Create Networks from the current Generation.
-    var nns = [];
-    for(var net of networks){
-      var nn = new Network();
-      nn.read(net, self.options.randomClamped());
+    // Create Networks from the current Generation.
+    const nns = [];
+    for (let net of networks) {
+      const nn = new Network();
+      nn.read(net, this.options.randomClamped()); // TODO
       nns.push(nn);
     }
 
-    if(self.options.lowHistoric){
-            // Remove old Networks.
-      if(self.generations.generations.length >= 2){
-        var genomes =
-          self.generations
-            .generations[self.generations.generations.length - 2]
-                        .genomes;
-        for(let i = 0; i < genomes.length; i++){
+    // If option set, remove old networks.
+    if (this.options.lowHistoric) {
+      if(this.generations.generations.length >= 2) {
+        const genomes = this.generations.generations[this.generations.generations.length - 2].genomes;
+        for (let i = 0; i < genomes.length; i++) {
           delete genomes[i].network;
         }
       }
     }
 
-    if(self.options.historic != -1){
-            // Remove older generations.
-      if(self.generations.generations.length > self.options.historic + 1){
-              self.generations.generations.splice(0,
-                  self.generations.generations.length - (self.options.historic + 1));
+    // If option set, remove older generations.
+    if (this.options.historic !== -1) {
+      if(this.generations.generations.length > this.options.historic + 1) {
+        this.generations.generations.splice(0, this.generations.generations.length - (this.options.historic + 1));
       }
     }
 
     return nns;
   }
 
-  /**
-   * Adds a new Genome with specified Neural Network and score.
-   *
-   * @param {network} Neural Network.
-   * @param {score} Score value.
-   * @return void.
-   */
-  self.networkScore = function(network, score){
-    self.generations.addGenome(
-      new Genome(score, network.save()),
-      self.options.scoreSort
-    );
+  networkScore (network, score) {
+    this.generations.addGenome(new Genome(score, network.save()), this.options.scoreSort);
   }
 }
