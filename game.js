@@ -1,6 +1,6 @@
-(function () { // TODO figure out what this does and remove it
-  var timeouts = [];
-  var messageName = 'zero-timeout-message';
+(function () { // https://dbaron.org/log/20100309-faster-timeouts
+  const timeouts = [];
+  const messageName = 'zero-timeout-message';
 
   function setZeroTimeout (fn) {
     timeouts.push(fn);
@@ -11,7 +11,7 @@
     if (event.source === window && event.data === messageName) {
       event.stopPropagation();
       if (timeouts.length > 0) {
-        var fn = timeouts.shift();
+        const fn = timeouts.shift();
         fn();
       }
     }
@@ -95,7 +95,7 @@ class Pipe {
 }
 
 class Game {
-  constructor (neuvol, assets) {
+  constructor (neuvol, assets, canvasID) {
     this.neuvol = neuvol;
     this.assets = assets;
 
@@ -103,7 +103,7 @@ class Game {
     this.pipes = [];
     this.birds = [];
     this.score = 0;
-    this.canvas = document.querySelector('#flappy'); // :( parametrize
+    this.canvas = document.querySelector(canvasID);
     this.ctx = this.canvas.getContext('2d');
     this.width = this.canvas.width;
     this.height = this.canvas.height;
@@ -178,7 +178,7 @@ class Game {
     for (let bird of this.birds) {
       if (bird.alive) {
         const inputs = [bird.y / this.height, nextHole];
-        const res = this.gen[i].compute(inputs, null); // NeuroEvolution: compute the network
+        const res = this.gen[i].compute(inputs, this.neuvol.options.activation); // NeuroEvolution: compute the network
         if (res > 0.5) {
           bird.flap();
         }
@@ -218,7 +218,7 @@ class Game {
     this.maxScore = (this.score > this.maxScore) ? this.score : this.maxScore;
 
     if (this.fps === 0) { // update runs on a setTimeout
-      setZeroTimeout(() => { this.update(); });
+      setZeroTimeout(() => { this.update(); }, 0); // significantly faster than setTimeout(..., 0)
     } else {
       setTimeout(() => { this.update(); }, 1000 / this.fps);
     }
@@ -291,13 +291,13 @@ window.onload = () => {
       population: 50,
       network: [2, [2], 1]
     });
-    game = new Game(neuvol, sprites);
+    game = new Game(neuvol, sprites, '#flappy');
     game.start();
   }
 
   start();
 };
 
-function speed (fps) { // TODO work on the DOM / UI
+function speed (fps) { // TODO work on the DOM side / UI
   game.fps = parseInt(fps);
 }

@@ -118,15 +118,7 @@ class Network {
           sum = sum + prevLayer.neurons[prevLayerN].value *
                      this.layers[l].neurons[n].weights[prevLayerN];
         }
-
-        // Compute the activation of the Neuron.
-        // this.layers[i].neurons[j].value = activation(sum); // this.options.activation(sum)
-
-        // HACK TEMP
-        this.layers[l].neurons[n].value = ((a) => {
-          const ap = -a / 1;
-          return (1 / (1 + Math.exp(ap)));
-        })(sum);
+        this.layers[l].neurons[n].value = activation(sum);
       }
       prevLayer = this.layers[l];
     }
