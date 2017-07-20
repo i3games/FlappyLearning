@@ -6,12 +6,12 @@ This is a fork of [https://github.com/xviniette/FlappyLearning/](https://github.
 Original code and all artwork in this project by Vincent Bazia.
 
 In order to understand the code, I rewrote it in a more [ES6](http://exploringjs.com/es6/index.html)'ish style.
-Details can be found in [NOTES.md](https://github.com/i3games/FlappyLearning/NOTES.md)
+Details can be found in [NOTES.md](https://github.com/i3games/FlappyLearning/blob/gh-pages/NOTES.md)
 
 ([Demo](http://xviniette.github.io/FlappyLearning/))
 ![alt tag](https://github.com/xviniette/FlappyLearning/blob/gh-pages/img/flappy.png?raw=true)
 
-### [neuroevolution.js](https://github.com/i3games/FlappyLearning/neuroevolution.js) : API
+### [neuroevolution.js](https://github.com/i3games/FlappyLearning/blob/gh-pages/neuroevolution.js) : API
 ```javascript
 // Initialize
 const ne = new Neuroevolution({ options });
@@ -29,7 +29,7 @@ ne.restart();
 ne.networkScore(generation[x], score);
 ```
 
-### [neuroevolution.js](https://github.com/i3games/FlappyLearning/neuroevolution.js) : Default Options
+### [neuroevolution.js](https://github.com/i3games/FlappyLearning/blob/gh-pages/neuroevolution.js) : Default Options
 
 ```javascript
 const options = {
