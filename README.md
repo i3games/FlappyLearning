@@ -1,6 +1,6 @@
 # Flappy Learning
 
-This is a fork of [http://github.com/xviniette/FlappyLearning/](), a
+This is a fork of [https://github.com/xviniette/FlappyLearning/](https://github.com/xviniette/FlappyLearning/), a
 [Neuroevolution](http://www.scholarpedia.org/article/Neuroevolution) approach to play Flappy Bird.
 
 Original code and all artwork in this project by Vincent Bazia.
