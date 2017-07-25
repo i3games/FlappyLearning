@@ -4,10 +4,10 @@ class Neuron {
     this.weights = [];
   }
 
-  populate (numInputs, values) {
+  populate (numInputs, valueFn) {
     this.weights = [];
     for (let i = 0; i < numInputs; i++) {
-      this.weights.push(values);
+      this.weights.push(valueFn());
     }
   }
 }
@@ -18,11 +18,11 @@ class Layer {
     this.neurons = [];
   }
 
-  populate (numNeurons, numInputs, values) {
+  populate (numNeurons, numInputs, valueFn) {
     this.neurons = [];
     for (let i = 0; i < numNeurons; i++) {
       let neuron = new Neuron();
-      neuron.populate(numInputs, values);
+      neuron.populate(numInputs, valueFn);
       this.neurons.push(neuron);
     }
   }
@@ -31,13 +31,13 @@ class Layer {
 class Network {
   constructor () { this.layers = []; }
 
-  generateLayers (numInputs, hiddens, numOutputs, values) {
+  generateLayers (numInputs, hiddens, numOutputs, valueFn) {
     let index = 0;
     let numPreviousNeurons = 0;
     let layer;
     // imput layer
     layer = new Layer(index);
-    layer.populate(numInputs, numPreviousNeurons, values); // Number of Inputs will be set to
+    layer.populate(numInputs, numPreviousNeurons, valueFn); // Number of Inputs will be set to
                                                   // 0 since it is an input layer.
     numPreviousNeurons = numInputs;  // number of input is size of previous layer. // TODO check
     this.layers.push(layer);
@@ -46,14 +46,14 @@ class Network {
     for (let hidden of hiddens) {
       // Repeat same process as first layer for each hidden layer.
       layer = new Layer(index);
-      layer.populate(hidden, numPreviousNeurons, values);
+      layer.populate(hidden, numPreviousNeurons, valueFn);
       numPreviousNeurons = hidden;
       this.layers.push(layer);
       index++;
     }
     // output layer
     layer = new Layer(index);
-    layer.populate(numOutputs, numPreviousNeurons, values);  // Number of input is equal to
+    layer.populate(numOutputs, numPreviousNeurons, valueFn);  // Number of input is equal to
                                                     // the size of the last hidden
                 // layer.
     this.layers.push(layer);
@@ -75,7 +75,7 @@ class Network {
     return data;
   }
 
-  read (save, values) {
+  read (save, valueFn) {
     let numPreviousNeurons = 0;
     let index = 0;
     let indexWeights = 0;
@@ -83,7 +83,7 @@ class Network {
     for (let numNeurons of save.neurons) {
       // Create and populate layers.
       let newLayer = new Layer(index);
-      newLayer.populate(numNeurons, numPreviousNeurons, values);
+      newLayer.populate(numNeurons, numPreviousNeurons, valueFn);
       for (let neuron of newLayer.neurons) {
         for (let weight = 0; weight < neuron.weights.length; weight++) {
             // Apply neurons weights to each Neuron.
@@ -229,19 +229,19 @@ class Generations {
     let currentGeneration = new Generation(); // TODO never used
   }
 
-  firstGeneration (population, network, randomClamped, numInputs, hiddens, numOutputs) { // FIXME numInputs, hiddens, numOutputs unused.
+  firstGeneration (population, network, valueFn, numInputs, hiddens, numOutputs) { // FIXME numInputs, hiddens, numOutputs unused.
     const out = [];
     for (let i = 0; i < population; i++) {
       // Generate the Network and save it.
       const nn = new Network();
-      nn.generateLayers(network[0], network[1], network[2], randomClamped());
+      nn.generateLayers(network[0], network[1], network[2], valueFn);
       out.push(nn.save());
     }
     this.generations.push(new Generation());
     return out;
   }
 
-  nextGeneration (elitism, population, randomBehaviour, randomClamped,
+  nextGeneration (elitism, population, randomBehaviour, valueFn,
     numChildren, mutationRate, mutationRange) {
     if (this.generations.length === 0) { // Need to create first generation.
       return false;
@@ -251,7 +251,7 @@ class Generations {
       elitism,
       population,
       randomBehaviour,
-      randomClamped, // TODO check
+      valueFn, // TODO check
       numChildren,
       mutationRate,
       mutationRange
@@ -316,6 +316,7 @@ class NeuroEvolution {
   nextGeneration () {
     let networks = [];
 
+    console.log("gen " + this.generations.generations.length);
     if (this.generations.generations.length === 0) { // If no Generations, create first.
       networks = this.generations.firstGeneration(
         this.options.population,
@@ -338,7 +339,7 @@ class NeuroEvolution {
     const nns = [];
     for (let net of networks) {
       const nn = new Network();
-      nn.read(net, this.options.randomClamped()); // TODO
+      nn.read(net, this.options.randomClamped); // TODO
       nns.push(nn);
     }
 

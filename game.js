@@ -153,6 +153,7 @@ class Game {
     this.birds = [];
 
     this.gen = this.neuvol.nextGeneration(); // NeuroEvolution: next generation
+    console.log(this.gen.length);
     for (let i = 0; i < this.gen.length; i++) {
       let b = new Bird();
       this.birds.push(b);
