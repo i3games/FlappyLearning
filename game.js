@@ -111,7 +111,7 @@ class Game {
     this.interval = 0;
     this.gen = [];
     this.alives = 0;
-    this.generation = 0;
+    this.numGeneration = 0;
     this.backgroundSpeed = 0.5;
     this.backgroundx = 0;
     this.maxScore = 0;
@@ -153,12 +153,11 @@ class Game {
     this.birds = [];
 
     this.gen = this.neuvol.nextGeneration(); // NeuroEvolution: next generation
-    console.log(this.gen.length);
     for (let i = 0; i < this.gen.length; i++) {
       let b = new Bird();
       this.birds.push(b);
     }
-    this.generation++;
+    this.numGeneration++;
     this.alives = this.birds.length;
   }
 
@@ -179,8 +178,9 @@ class Game {
     for (let bird of this.birds) {
       if (bird.alive) {
         const inputs = [bird.y / this.height, nextHole];
-        const res = this.gen[i].compute(inputs, this.neuvol.options.activation); // NeuroEvolution: compute the network
-        if (res > 0.5) {
+        const result = this.gen[i].compute(inputs, this.neuvol.options.activation); // NeuroEvolution: compute the network
+        // result is an array
+        if (result[0] > 0.5) {
           bird.flap();
         }
         bird.update();
@@ -268,7 +268,7 @@ class Game {
     this.ctx.font = '20px Oswald, sans-serif';
     this.ctx.fillText(`Score : ${this.score}`, 10, 25);
     this.ctx.fillText(`Max Score : ${this.maxScore}`, 10, 50);
-    this.ctx.fillText(`Generation : ${this.generation}`, 10, 75);
+    this.ctx.fillText(`Generation : ${this.numGeneration}`, 10, 75);
     this.ctx.fillText(`Alive : ${this.alives} / ${this.neuvol.options.population}`, 10, 100);
 
     requestAnimationFrame(() => { // display runs on requestAnimationFrame

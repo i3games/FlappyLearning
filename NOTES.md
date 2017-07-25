@@ -1,10 +1,25 @@
 # About the program
 
-The game runs on two separate loops: `game.display` uses `requestAnimationFrame` to draw the world,
-while `game.update` uses `setTimeout` to refresh parameters. The rate can be set in the user interface. To my surprise, the highest speed setting switches to a `window.postMessage` construction (see the top of `game.js`) in favour of `setTimeout(callback, 0)`. I originally planned to get rid of this gnarly  [IFFE](https://en.wikipedia.org/wiki/Immediately-invoked_function_expression), until I learned that it is [significantly faster](https://dbaron.org/log/20100309-faster-timeouts) than the JavaScript event loop.
+A bird learns to fly (with lots of dead birds on the way).
 
-There are `neuroEvolution.options.population` birds simultaneously, and most of them will flap helplessly against the pipes or hit the ground like we did when we discovered the [sqalid grace of Flappy Bird](https://www.theatlantic.com/technology/archive/2014/02/the-squalid-grace-of-flappy-bird/283526/). Each time the whole populations dies, a new `Generation` is summoned in `game.init()`. During their - in general - short lifespan the birds "see" their own vertical position and the lower edge of the next pipe (`game.update()`).
+There are `neuroEvolution.options.population` birds simultaneously, and most of them will flap helplessly against the pipes or hit the ground, just as we did when we discovered the [sqalid grace of Flappy Bird](https://www.theatlantic.com/technology/archive/2014/02/the-squalid-grace-of-flappy-bird/283526/). Each time the whole populations dies, a new `Generation` is summoned in `game.init()`. During their - in general - short lifespan the birds "see" their own vertical position and the lower edge of the next pipe (`game.update()`).
 These two inputs feed into their little 'brains', where it gets interesting.
+
+A flappy bird brain consists of a small neural `Network`, made of `Layer`s of `Neuron`s, which have a value and a bunch of weights. There can be an input layer, some hidden layers and one output layer. In fact, our tiny bird has a tiny brain: it consists of merely 2 input neurons, one hidden layer with two neurons and one output neuron. The number of hidden layers and the number of neurons at each layer is provided by a parameter object in the `start` function (`game.js`, `window.onload()`).
+
+Layers and neurons are constructed in `network.generateLayers()`, and the neurons are initialized with random values between -1 and 1 provided by the function `neuroEvolution.options.initialization`.
+
+The current state of a network (the value of all it's weights) can also be `save()`d to and `read()` back from a network data object.
+
+Most importantly, the network `compute`s an output value. So the bird (of a generation of birds to be exact, more to that later) receives its  
+vertical position and the one of the next hole in the pipes, along with an activation function `this.neuvol.options.activation`.
+
+Each input value goes into one input neuron. Then the neurons in the others layers are computed as follows: each neuron first computes the sum of: the value of each neuron from the previous layer multiplied by the weight connecting to that neuron. Then the activation function is run over that sum.
+
+The result is stored in the value of the neuron. This goes for each neuron in each layer. Finally we arrive at the output layer. Its values are returned from the `compute` function to the `game.update()`: if the first output value is > 0.5 then the bird flaps its tiny wings.
+
+This is the 'Neuro' part. Now we come to the Evolution part.
+
 
 (to be continued)  
 
@@ -77,6 +92,9 @@ Game = {
 }
 ```
 
-I haven't used modules (yet), I like the simplicity of having a few JavaScript and an HTML file. If the program gets more complex / wants to be tested / re-used, ES6 modules and [webpack](https://webpack.js.org/) would be appropriate.
+I haven't switched the code to modules (yet), I like the simplicity of having a few JavaScript and an HTML file. If the program gets more complex / wants to be tested / re-used, ES6 modules and [webpack](https://webpack.js.org/) would be appropriate.
 
 I run everything through [semistandard](https://github.com/Flet/semistandard).
+
+The game runs on two separate loops: `game.display` uses `requestAnimationFrame` to draw the world,
+while `game.update` uses `setTimeout` to refresh parameters. The rate can be set in the user interface. To my surprise, the highest speed setting switches to a `window.postMessage` construction (see the top of `game.js`) in favour of `setTimeout(callback, 0)`. I originally planned to get rid of this gnarly  [IFFE](https://en.wikipedia.org/wiki/Immediately-invoked_function_expression), until I learned that it is [significantly faster](https://dbaron.org/log/20100309-faster-timeouts) than the JavaScript event loop.
