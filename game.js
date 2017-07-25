@@ -281,10 +281,10 @@ let game;
 
 window.onload = () => {
   const sprites = {
-    bird: './img/bird.png',
-    background: './img/background.png',
-    pipetop: './img/pipetop.png',
-    pipebottom: './img/pipebottom.png'
+    bird: './assets/bird.png',
+    background: './assets/background.png',
+    pipetop: './assets/pipetop.png',
+    pipebottom: './assets/pipebottom.png'
   };
 
   function start () {

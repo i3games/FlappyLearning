@@ -22,7 +22,7 @@ class Layer {
 class Network {
   constructor () { this.layers = []; }
 
-  // network can be constructed from read, therefore a separate generate method:
+  // network can be constructed ore decoded, therefore a separate generate method:
   generateLayers (numInputs, numsHidden, numOutputs, valueFn) {
     let index = 0;
     let numPreviousNeurons = 0;
@@ -46,10 +46,10 @@ class Network {
     this.layers.push(layer);
   }
 
-  save () {
+  encode () {
     const data = {
       neurons: [], // number of neurons in each layer
-      weights: []
+      weights: []  // flat list of weights
     };
     for (let layer of this.layers) {
       data.neurons.push(layer.neurons.length);
@@ -62,17 +62,17 @@ class Network {
     return data;
   }
 
-  read (save, valueFn) {
+  decode (encodedNetwork, valueFn) {
     let numPreviousNeurons = 0;
     let index = 0;
     let indexWeights = 0;
     this.layers = [];
-    for (let numNeurons of save.neurons) {
+    for (let numNeurons of encodedNetwork.neurons) {
       let newLayer = new Layer(index, numNeurons, numPreviousNeurons, valueFn);
       for (let neuron of newLayer.neurons) {
         for (let weight = 0; weight < neuron.weights.length; weight++) {
             // Apply neurons weights to each Neuron.
-          neuron.weights[weight] = save.weights[indexWeights];
+          neuron.weights[weight] = encodedNetwork.weights[indexWeights];
           indexWeights++; // Increment index of flat array.
         }
       }
@@ -215,10 +215,10 @@ class Generations {
   firstGeneration (population, network, valueFn, numInputs, hiddens, numOutputs) { // FIXME numInputs, hiddens, numOutputs unused.
     const out = [];
     for (let i = 0; i < population; i++) {
-      // Generate the Network and save it.
+      // Generate the Network and encode it.
       const nn = new Network();
       nn.generateLayers(network[0], network[1], network[2], valueFn);
-      out.push(nn.save());
+      out.push(nn.encode());
     }
     this.generations.push(new Generation());
     return out;
@@ -321,7 +321,7 @@ class NeuroEvolution {
     const nns = [];
     for (let net of networks) {
       const nn = new Network();
-      nn.read(net, this.options.initialization);
+      nn.decode(net, this.options.initialization);
       nns.push(nn);
     }
 
@@ -346,6 +346,6 @@ class NeuroEvolution {
   }
 
   networkScore (network, score) {
-    this.generations.addGenome(new Genome(score, network.save()), this.options.scoreSort);
+    this.generations.addGenome(new Genome(score, network.encode()), this.options.scoreSort);
   }
 }
