@@ -54,7 +54,7 @@ o.value = activation(
 )
 ```
 
-The weights are initialized with `neuroEvolution.options.initialization`, which gives  random values between -1 and 1. The inputs are height of the bird and next hole. lets say the bird is at 0.5 and the hole is at 0.77.
+The weights are initialized with `neuroEvolution.options.initialization`, which gives random values between -1 and 1. The inputs are the vertical position of the bird and that of the next hole. Let's say the bird is at 0.5 (center) and the hole is a bit higher at 0.77.
 
 ```
 o.value = activation(
@@ -64,11 +64,13 @@ o.value = activation(
 = 0.4602711745
 ```
 
-The bird wouldn't flap. And crash against the pipe. And die. This is because it doesn't "know" it should flap. This "knowledge" can only come from the weights, but they are initialized randomly. In other learning algorithms those weights would be modified over time until they fit the situation, i.e. the bird given those inputs would flap to clear the pipe. But our network does not do anything like this.
+The bird wouldn't flap. And crash against the pipe. And die.
+
+This is because it doesn't "know" it should flap. This "knowledge" can only arise from the weights, but they have been initialized randomly. In other learning algorithms those weights would be modified over time until they fit the situation, i.e. a bird given those inputs would flap to clear the pipe. But our network does not do anything like this.
 
 How does it work then? 🤔  
 
-This is the end of the Neuro part. Now we come to the Evolution part. Warning: If you believe in 'Creationism', the following could be disturbing.
+To answer this, we leave the 'Neuro' part and come to the 'Evolution' part. (Warning: If you believe in 'Creationism' and the concept of 'Evolution' troubles you, the following could be disturbing.)
 
 (to be continued)  
 

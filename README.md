@@ -33,16 +33,15 @@ ne.networkScore(generation[x], score);
 
 ```javascript
 const options = {
-  activation: function (a) {  // Network activation function
-    const ap = (-a) / 1;
-    return (1 / (1 + Math.exp(ap)));
+  activation: function (a) {  // Neuron activation function
+    return (1 / (1 + Math.exp(-a)));
   },
-  randomClamped: function () { // Random number range
+  initialization: function () { // Weight initialization function
     return Math.random() * 2 - 1;
   },
   network: [1, [1], 1],    // Perceptron network structure (1 hidden layer).
   population: 50,          // Population by generation.
-  elitism: 0.2,            // Best networks kepts unchanged for the next generation (rate).
+  elitism: 0.2,            // Best networks kept unchanged for the next generation (rate).
   randomBehaviour: 0.2,    // New random networks for the next generation (rate).
   mutationRate: 0.1,       // Mutation rate on the weights of synapses.
   mutationRange: 0.5,      // Interval of the mutation changes on the synapse weight.

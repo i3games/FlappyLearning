@@ -65,8 +65,10 @@ class Bird {
         return true;
       }
     }
+    
+    return false;
   }
-  }
+}
 
 class Pipe {
   constructor (params) {
